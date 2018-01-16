@@ -34,7 +34,8 @@ const uint32_t TLM_UW2 = 0xEC8AA816;
 bool masterRunning = false;
 
 void setDefaults(SatHelper::ConfigParser &parser) {
-    parser[CFG_DISPLAY] = "false";
+    parser[CFG_DISPLAY] = "true";
+    parser[CFG_FILE] = "false";
     parser[CFG_DEMOD_PORT] = QUOTE(DEFAULT_DEMODULATOR_PORT);
     parser[CFG_VCHANNEL_PORT] = QUOTE(DEFAULT_VCHANNEL_PORT);
     parser[CFG_STATISTICS_PORT] = QUOTE(DEFAULT_STATISTICS_PORT);
@@ -42,7 +43,7 @@ void setDefaults(SatHelper::ConfigParser &parser) {
 }
 
 int main(int argc, char **argv) {
-    SatHelper::ConfigParser parser("xritdecoder.cfg");
+    SatHelper::ConfigParser parser("tlmdecoder.cfg");
     int demodulatorPort = DEFAULT_DEMODULATOR_PORT;
     int vChannelPort = DEFAULT_VCHANNEL_PORT;
     int statisticsPort = DEFAULT_STATISTICS_PORT;
@@ -53,7 +54,6 @@ int main(int argc, char **argv) {
     uint8_t rsCorrectedData[FRAMESIZE];
     uint8_t rsWorkBuffer[255];
 
-    uint8_t syncWord[4];
     uint64_t droppedPackets = 0;
     uint64_t averageRSCorrections = 0;
     uint64_t frameCount = 0;
@@ -64,6 +64,7 @@ int main(int argc, char **argv) {
     uint32_t checkTime = 0;
     bool runUi = false;
     bool dump = false;
+    bool saveToFile = false;
     Statistics statistics;
     bool isCorrupted;
     bool lastFrameOK = false;
@@ -98,6 +99,10 @@ int main(int argc, char **argv) {
 
     if (parser.hasKey(CFG_DUMP_PACKET)) {
         dump = parser.getBool(CFG_DUMP_PACKET);
+    }
+
+    if (parser.hasKey(CFG_FILE)) {
+        saveToFile = parser.getBool(CFG_FILE);
     }
 
     if (parser.hasKey(CFG_DEMOD_PORT)) {
@@ -195,7 +200,20 @@ int main(int argc, char **argv) {
                     flywheelCount = 0;
                 }
 
-                correlator.correlate(codedData, chunkSize);
+                if (!lastFrameOK) {
+                    correlator.correlate(codedData, chunkSize);
+                } else {
+                    // If we got a good lock before, let's just check if the sync is in correct pos.
+                    correlator.correlate(codedData, chunkSize / 32);
+                    if (correlator.getHighestCorrelationPosition() != 0) {
+                        // Oh no, that means something happened :/
+                        std::cerr << "Something happened. Pos: " << correlator.getHighestCorrelationPosition() << std::endl;
+                        correlator.correlate(codedData, chunkSize);
+                        lastFrameOK = false;
+                        flywheelCount = 0;
+                    }
+                }
+                flywheelCount++;
 
                 uint32_t word = correlator.getCorrelationWordNumber();
                 uint32_t pos = correlator.getHighestCorrelationPosition();
@@ -264,8 +282,7 @@ int main(int argc, char **argv) {
                 uint8_t scid = static_cast<uint8_t>(((*rsCorrectedData) & 0x3F) << 2 | (*(rsCorrectedData + 1) & 0xC0) >> 6);
                 uint8_t vcid = static_cast<uint8_t>((*(rsCorrectedData + 1)) & 0x3F);
                 
-                cout << "RS: " << derrors[0] << " | SCID: " << int(scid) << " | VCID: " << int(vcid) << endl;
-
+                //cout << "RS: " << derrors[0] << " | SCID: " << int(scid) << " | VCID: " << int(vcid) << endl;
 
                 // Packet Counter from Packet
                 uint32_t counter = *((uint32_t *) (rsCorrectedData + 2));
@@ -274,16 +291,15 @@ int main(int argc, char **argv) {
                 counter = counter >> 8;
 
                 uint8_t phaseCorr = static_cast<uint8_t>(phaseShift == SatHelper::PhaseShift::DEG_180 ? 180 : 0);
-                uint16_t partialVitCorrections = (uint16_t) 0;
                 uint8_t partialRSCorrections = (uint8_t) (averageRSCorrections / frameCount);
-                uint8_t signalQuality = 0;
 
                 if (!isCorrupted) {
                     channelDispatcher.add((char *) rsCorrectedData, FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE / 8));
                     
-                    ofstream out2("./TLM_DECODED.raw", ios::out | ios::app | ios::binary);
-                    out2.write((char*)rsCorrectedData, (FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE / 8))*sizeof(uint8_t)); 
-
+                    if (saveToFile) {
+                        ofstream out("./telemetry.raw", ios::out | ios::app | ios::binary);
+                        out.write((char*)rsCorrectedData, (FRAMESIZE - RSPARITYBLOCK - (SYNCWORDSIZE / 8))*sizeof(uint8_t)); 
+                    }
 
                     if (lastPacketCount[vcid] + 1 != counter && lastPacketCount[vcid] > -1) {
                         int lostCount = (int)(counter - lastPacketCount[vcid] - 1);
@@ -294,25 +310,22 @@ int main(int argc, char **argv) {
                     lastPacketCount[vcid] = counter;
                     receivedPacketsPerFrame[vcid] = receivedPacketsPerFrame[vcid] == -1 ? 1 : receivedPacketsPerFrame[vcid] + 1;
 
-                    statistics.update(scid, vcid, (uint64_t) counter, 0, FRAMEBITS, derrors, signalQuality, static_cast<uint8_t>(corr), phaseCorr,
-                            lostPackets, partialVitCorrections, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount,
-                            syncWord, true);
+                    statistics.update(scid, vcid, (uint64_t) counter, FRAMEBITS, derrors, static_cast<uint8_t>(corr), phaseCorr,
+                            lostPackets, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, true);
 
                     if (runUi) {
-                        display.update(scid, vcid, (uint64_t) counter, 0, FRAMEBITS, derrors, signalQuality, static_cast<uint8_t>(corr), phaseCorr,
-                                lostPackets, partialVitCorrections, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame,
-                                frameCount, syncWord, true);
+                        display.update(scid, vcid, (uint64_t) counter, FRAMEBITS, derrors, static_cast<uint8_t>(corr), phaseCorr,
+                                lostPackets, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, true);
 
                         display.show();
                     }
                 } else {
-                    statistics.update(0, 0, 0, 0, FRAMEBITS, derrors, 0, static_cast<uint8_t>(corr), 0, lostPackets, partialVitCorrections,
-                            partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, syncWord, false);
+                    statistics.update(0, 0, 0, FRAMEBITS, derrors, static_cast<uint8_t>(corr), 0, lostPackets,
+                            partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, false);
 
                     if (runUi) {
-                        display.update(0, 0, 0, 0, FRAMEBITS, derrors, signalQuality, static_cast<uint8_t>(corr), phaseCorr, lostPackets,
-                                partialVitCorrections, partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, syncWord,
-                                false);
+                        display.update(0, 0, 0, FRAMEBITS, derrors, static_cast<uint8_t>(corr), phaseCorr, lostPackets,
+                        partialRSCorrections, droppedPackets, receivedPacketsPerFrame, lostPacketsPerFrame, frameCount, false);
 
                         display.show();
                     }

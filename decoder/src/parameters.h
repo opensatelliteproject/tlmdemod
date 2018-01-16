@@ -3,6 +3,7 @@
  *
  *  Created on: 10/02/2017
  *      Author: Lucas Teske
+ *  	Edited: Luigi Freitas
  */
 
 #ifndef PARAMETERS_H_
@@ -24,7 +25,6 @@
 #define GIT_SHA1 unk
 #endif
 
-//#define USE_LAST_FRAME_DATA
 #define FRAMESIZE 256
 #define FRAMEBITS (FRAMESIZE * 8)
 #define CODEDFRAMESIZE (FRAMEBITS)
@@ -43,6 +43,7 @@
 
 // Config file keys
 #define CFG_MODE "mode"
+#define CFG_FILE "saveToFile"
 #define CFG_DISPLAY "display"
 #define CFG_DUMP_PACKET "dumpPackets"
 #define CFG_FLYWHEEL_RECHECK "flywheelRecheck"
