@@ -1,9 +1,10 @@
-GOES CDS Telemetry Demodulator/Decoder
+GOES-16 CDA Telemetry Demodulator/Decoder
 =========================================
 
-This is a multiple-program project (at least for now). But we got this working! 
-Soon there will be a user-guide for the software. 
-For details of the implementation check either the codes or check [GOES CDA Telemtry](http://luigifreitas.me/projects/goes-cda-telemetry) series.
+These three programs demodulate, decode and demux the **GOES-16 CDA Telemetry Signal** generating `.tlm` files that can be further processed by the user. This project currently supports the 40 Kilosymbol CDA Telemetry Signal coming from GOES-16. But it will ~probably~ support all Thrid Generation NOAA's GOES Satellites (GOES-R, GOES-S, GOES-T, GOES-U). 
+
+Learn more: [Reverse Engineering GOES-16 CDA Telemetry Signal]().
 
 * [Demodulator](demodulator/)
 * [Decoder](decoder/)
+* [Demuxer](demuxer/)
