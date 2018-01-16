@@ -1,15 +1,28 @@
-GOES xRIT Decoder
+GOES-16 CDA Telemetry Decoder
 =================
 
-This is the GOES xRIT Decoder. This works together with the demodulator by receiving a TCP Stream of the BPSK Symbols.
-The output is a demuxed channel data at `channels/channel_{ID}.bin`.
+This program receives the **GOES-16 CDA Telemetry Signal** BPSK symbol stream via TCP from the [GNURadio Demodulator]() and perform all the decoding necessary to extract the CCSDS Transport Frames. After the decoding process, the Transport Frames will be sent via TCP to [tlmdump]() for further processing required to generate de `.tlm` files. This decoder currently supports the 40 Kilosymbol CDA Telemetry Signal coming from GOES-16. 
 
-It depends on **SatHelper** library either by a static link or shared link (see SatHelper folder for more info)
+## Decoding Process
 
-![Screenshot](decoder.png)
+1. Frame Synchronization by CCSDS Word Correlation.
+2. Soft to Hard Symbols Conversion.
+3. Differential Decoding (NRZ-M).
+4. Derandomization.
+5. Reed Solomon.
+6. Frames sent via TCP to [tlmdump]().
 
-To compile just go to any of the folders `Debug`, `Release` or `Release Static` and run `make`. You can also use `Eclipse CDT` to compile the project.
+## Installation
 
-## Dependencies
+```
+mkdir build
+cd build
+cmake ..
+make -j4
+./tlmDecoder
+```
+This project depends on [SatHelper](../../SatHelper/).
 
-* [SatHelper](../../SatHelper/)
+## Usage 
+
+Compile the project and run `./tlmDecoder` after initializing the [GNURadio Demodulator]().
