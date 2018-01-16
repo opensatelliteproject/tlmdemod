@@ -1,9 +1,7 @@
 GOES-16 CDA Telemetry Decoder
 =================
 
-This program receives the **GOES-16 CDA Telemetry** BPSK symbol stream via TCP from the [GNURadio Demodulator](../demodulator) and perform all the decoding necessary to extract the CCSDS Transport Frames. After the decoding process, the Transport Frames will be sent via TCP to [tlmdump](https://github.com/luigifreitas/tlmdump) for further processing required to generate de `.tlm` files.
-
-This decoder currently supports the 40 Kilosymbol CDA Telemetry Signal coming from GOES-16.
+This program receives the **GOES-16 CDA Telemetry** BPSK symbol stream via TCP from the [GNURadio Demodulator](../demodulator) and perform all the decoding necessary to extract the CCSDS Transport Frames. After the decoding process, the Transport Frames will be sent via TCP to [tlmdump](../demux) for further processing required to generate de `.tlm` files.
 
 ## Decoding Process
 
@@ -12,7 +10,7 @@ This decoder currently supports the 40 Kilosymbol CDA Telemetry Signal coming fr
 3. Differential Decoding (NRZ-M).
 4. Derandomization.
 5. Reed Solomon.
-6. Frames sent via TCP to [tlmdump](https://github.com/luigifreitas/tlmdump).
+6. Frames sent via TCP to [tlmdump](../demux).
 
 ## Installation
 

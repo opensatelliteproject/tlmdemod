@@ -30,8 +30,8 @@ add_definitions(-DMAINT_VERSION=${VERSION_INFO_MAINT_VERSION})
 add_definitions(-DGIT_SHA1=${GIT_SHA1})
 
 # Flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -pipe -march=native")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -O3 -pipe -march=native")
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
 
 # Source Code

@@ -1,17 +1,8 @@
-GOES xRIT Demodulator
+GOES-16 CDA Telemetry Demodulator
 =========================================
 
-This is a GNU Radio Flow for Demodulating BPSK signals from GOES LRIT. 
-The flow contains alternatives for Airspy R2 (default), Airspy Mini, GQRX Record and RTLSDR. 
-The Base processing Sample Rate is 1msps, so you can adapt the flow to get your favorite SDR IQ to fit 1msps at 1691MHz. Have fun!
+The telemetry signal from GOES-16 is centered in 1963 MHz close to the HRIT Signal (1964.1 MHz). Since there is no Convolutional Error correction you will need a good SNR to be decodable. Decimating the signal will help improve the SNR.
 
-The demodulator application works for both HRIT / LRIT (set at compile time) and it's adapted for Airspy R2 and Airspy Mini
+![GNURadio Companion Screenshot](goes_tlm.png)  
 
-![Screenshot](demodulator.png)
-
-## Dependencies
-
-* [librtlsdr](https://github.com/librtlsdr/librtlsdr)
-* [libairpy](https://github.com/airspy/airspyone_host/tree/master/libairspy)
-* [libusb](https://github.com/libusb/libusb)
-* [hackrf](https://github.com/mossmann/hackrf/tree/master/host)
+Currently the demodulator is a [GNURadio](https://github.com/gnuradio/gnuradio) Companion. But in the near future it will be ported to the [libsathelper](https://github.com/opensatelliteproject/libsathelper) demodulator.
