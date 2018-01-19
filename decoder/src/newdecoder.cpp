@@ -15,8 +15,8 @@
 #include "StatisticsDispatcher.h"
 #include "parameters.h"
 #include "ExitHandler.h"
-#include<iostream>
-#include<fstream>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -43,7 +43,7 @@ void setDefaults(SatHelper::ConfigParser &parser) {
 }
 
 int main(int argc, char **argv) {
-    SatHelper::ConfigParser parser("tlmdecoder.cfg");
+    SatHelper::ConfigParser parser("decoder.cfg");
     int demodulatorPort = DEFAULT_DEMODULATOR_PORT;
     int vChannelPort = DEFAULT_VCHANNEL_PORT;
     int statisticsPort = DEFAULT_STATISTICS_PORT;
