@@ -5,4 +5,4 @@ The telemetry signal from GOES-16 is centered in 1963 MHz close to the HRIT Sign
 
 ![GNURadio Companion Screenshot](goes_tlm.png)  
 
-Currently the demodulator is a [GNURadio](https://github.com/gnuradio/gnuradio) Companion. But in the near future it will be ported to the [libsathelper](https://github.com/opensatelliteproject/libsathelper) demodulator.
+The demodulator is made with [GNURadio](https://github.com/gnuradio/gnuradio) Companion.
